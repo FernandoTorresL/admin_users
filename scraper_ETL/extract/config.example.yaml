@@ -2,5 +2,14 @@ website_data:
   url: http://1.1.1.1/site/
   user: usuario
   password: pwd
-  tags:
-    tag_bntAceptarLogin: "tag_name"
+  labels:
+    page01:
+      alt_bntAceptarLogin: ""
+    page02:
+      text_menuCtrlUsuarios: ""
+    page03:
+      name_selectMenu: ""
+      option_selectMenu: ""
+      alt_bntAceptarSelect: ""
+    page04:
+      alt_bntConsulta: ""

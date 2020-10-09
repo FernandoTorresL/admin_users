@@ -16,11 +16,13 @@ Check first the configuration on this example file.
 Example *config.example.yaml*:
 ```cmd
 website_data:
-  url: http://1.1.1.1/site/
-  user: usuario
-  password: pwd
-  tags:
-    tag_bntAceptarLogin: "tag_name"
+  url: http://1.2.3.4:1234/site/
+  user: user
+  password: password
+  labels:
+    page01:
+      alt_bntAceptarLogin: "alt_name"
+    page02:
     ...
 ```
 ---
