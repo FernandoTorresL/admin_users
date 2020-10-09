@@ -10,13 +10,18 @@ The website data are confidential because is from an intranet site.
 So, the real url is on a secret **config.yaml** production file.
 This file defines where are the urls, the XPath strings, titles and body from that site.
 
-In GitHub there is only a **config.yaml.example** with dummy data.
+In GitHub there is only a **config.example.yaml** with dummy data.
 Check first the configuration on this example file.
 
-Example config.yaml.example:
+Example *config.example.yaml*:
 ```cmd
 website_data:
-  url: http://1.1.1.1/example_site.com/
+  url: http://1.1.1.1/site/
+  user: usuario
+  password: pwd
+  tags:
+    tag_bntAceptarLogin: "tag_name"
+    ...
 ```
 ---
 
