@@ -13,3 +13,7 @@ website_data:
       alt_bntAceptarSelect: ""
     page04:
       alt_bntConsulta: ""
+    page05:
+      class_table: ""
+      class_td: ""
+      class_a: ""
