@@ -4,15 +4,19 @@ from selenium import webdriver
 # Import config file
 from common import config
 
-def get_access(host, website_uid):
+def get_driver(host, website_uid):
 
-  # Setup driver
+  # Setup
   options = webdriver.ChromeOptions()
   options.add_argument('--incognito')
   driver = webdriver.Chrome(executable_path='../../driver/chromedriver', options=options)
 
   # Get the site
   driver.get(host)
+
+  return driver
+
+def get_access(host, website_uid, driver):
 
   # Get the credential data
   user = config()['websites'][website_uid]['user']
@@ -27,6 +31,3 @@ def get_access(host, website_uid):
   # Click to login... the element is an input without name and an alt tag defined on config.yaml: 
       # <input type="image" name src="bt_aceptar.gif" alt="Entar al Sistema">
   driver.find_element_by_xpath('//input[@alt="' + alt_bntAceptarLogin + '"]').click()
-
-  return driver
-  # password = config()['wbsites']['admin_users']['password']

@@ -8,6 +8,7 @@ from common import config
 
 # Import login procedure
 from login import get_access
+from login import get_driver
 
 # Import navigate function
 from navigate import navigate_to_data
@@ -20,7 +21,9 @@ def _website_scraper(website_uid):
     host = config()['websites'][website_uid]['url']
 
     logging.info('Beginning scraper for {}'.format(host))
-    driver = get_access(host, website_uid)
+
+    driver = get_driver(host, website_uid)
+    get_access(host, website_uid, driver)
     navigate_to_data(host, website_uid, driver)
 
 if __name__ == '__main__':
