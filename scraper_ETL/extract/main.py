@@ -1,6 +1,7 @@
 import argparse
 import logging
 
+import accounts_page_objects as accounts
 # Import config file
 from common import config
 
@@ -12,7 +13,7 @@ from selenium.webdriver.support.select import Select
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def get_access(host, website_uid, driver):
+def get_access(website_uid, driver):
     # Get the credential data
     user = config()['websites'][website_uid]['user']
     password = config()['websites'][website_uid]['password']
@@ -28,7 +29,7 @@ def get_access(host, website_uid, driver):
 
     return True
 
-def navigate_to_data(host, website_uid, driver):
+def navigate_to_data(website_uid, driver):
 
     # Locate the menu option
     text_menuCtrlUsuarios = config()['websites'][website_uid]['labels']['page02']['text_menuCtrlUsuarios']
@@ -53,6 +54,45 @@ def navigate_to_data(host, website_uid, driver):
 
     # password = config()['wbsites']['admin_users']['password']
 
+def _count_pages(website_uid, driver):
+    # Count the pages...
+    class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
+    class_a = config()['websites'][website_uid]['labels']['page05']['class_a']
+    pages = driver.find_element_by_xpath('//td[@class="' + class_td + '"]').find_elements_by_xpath('//a[@class="' + class_a + '"]')
+    pages
+
+    next_page = pages[0]
+    print('Next page is: ', next_page.text)
+
+    final_page = pages[1]
+
+    return final_page.text
+
+def _count_rows(website_uid, driver):
+    # Count the rows...
+    class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
+    class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
+    total_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+    total_rows = int(len(total_rows))
+
+    return total_rows
+
+def _fetch_record(website_uid, driver, page_number):
+    logger.info('Start fetching records at page {}'.format(page_number))
+
+    record = None
+
+    class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
+    class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
+    all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+
+    try:
+        record = accounts.RecordRow(all_rows, page_number)
+    except () as e:
+        logger.warning('Error while fetching record', exc_info=False)
+
+    return record
+
 def _accounts_scraper(website_uid):
     # Get the url of the website (parameter)
     host = config()['websites'][website_uid]['url']
@@ -67,7 +107,7 @@ def _accounts_scraper(website_uid):
     driver.get(host)
 
     # Try login
-    login = get_access(host, website_uid, driver)
+    login = get_access(website_uid, driver)
     if not login:
         logger.warning('Error on login', exc_info=False)
     else:
@@ -75,7 +115,40 @@ def _accounts_scraper(website_uid):
     print('')
 
     # Navigate to data
-    navigate_to_data(host, website_uid, driver)
+    navigate_to_data(website_uid, driver)
+
+    logging.info('Finding number of pages...')
+    total_pages = _count_pages(website_uid, driver)
+    print('Total pages: ', total_pages)
+
+    # Count the rows...
+    class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
+    class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
+    total_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+    total_rows = int(len(total_rows))
+
+    print('Total rows: ', total_rows)
+
+    records = []
+    # Recorriendo las páginas
+    # for i in range(2, int(total_pages)):
+    for i in range(2, 3):
+        print(i)
+        record = _fetch_record(website_uid, driver, 0)
+
+        if record:
+            logger.info('Record fetched!!')
+            records.append(record)
+            print('     ', records)
+        print('')
+
+    print(len(records))
+
+    print(records[0].curp)
+    print(records[0].matricula)
+    print(records[0].nombre)
+    print(records[0].cuenta)
+    print(records[0].grupo)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
