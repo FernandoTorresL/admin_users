@@ -1,5 +1,7 @@
 import argparse
 import logging
+import csv
+import datetime
 
 import accounts_page_objects as accounts
 # Import config file
@@ -52,8 +54,6 @@ def navigate_to_data(website_uid, driver):
     alt_bntConsulta = config()['websites'][website_uid]['labels']['page04']['alt_bntConsulta']
     driver.find_element_by_xpath('//img[@alt="' + alt_bntConsulta + '"]').click()
 
-    # password = config()['wbsites']['admin_users']['password']
-
 def _count_pages(website_uid, driver):
     # Count the pages...
     class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
@@ -90,6 +90,21 @@ def _fetch_record(all_rows, field_number):
         logger.warning('Error while fetching record', exc_info=False)
 
     return record
+
+def _save_records(website_uid, records):
+    now = datetime.datetime.now().strftime('%Y_%m_%d')
+    out_file_name = '{website_uid}_{datetime}_records.csv'.format(
+        website_uid=website_uid,
+        datetime=now)
+    csv_headers = list(filter(lambda property: not property.startswith('_'), dir(records[0])))
+
+    with open(out_file_name, mode='w+') as f:
+        writer = csv.writer(f)
+        writer.writerow(csv_headers)
+
+        for record in records:
+            row = [str(getattr(record, prop)) for prop in csv_headers]
+            writer.writerow(row)
 
 def _accounts_scraper(website_uid):
     # Get the url of the website (parameter)
@@ -149,6 +164,8 @@ def _accounts_scraper(website_uid):
     print(records[0].nombre)
     print(records[0].cuenta)
     print(records[0].grupo)
+
+    _save_records(website_uid, records)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
