@@ -4,7 +4,7 @@ from selenium import webdriver
 # Import config file
 from common import config
 
-def get_access(host):
+def get_access(host, website_uid):
 
   # Setup driver
   options = webdriver.ChromeOptions()
@@ -15,10 +15,10 @@ def get_access(host):
   driver.get(host)
 
   # Get the credential data
-  user = config()['websites']['admin_users']['user']
-  password = config()['websites']['admin_users']['password']
+  user = config()['websites'][website_uid]['user']
+  password = config()['websites'][website_uid]['password']
 
-  alt_bntAceptarLogin = config()['websites']['admin_users']['labels']['page01']['alt_bntAceptarLogin']
+  alt_bntAceptarLogin = config()['websites'][website_uid]['labels']['page01']['alt_bntAceptarLogin']
 
   # Login
   driver.find_element_by_xpath('//input[@name="usuario"]').send_keys(user)
@@ -28,5 +28,5 @@ def get_access(host):
       # <input type="image" name src="bt_aceptar.gif" alt="Entar al Sistema">
   driver.find_element_by_xpath('//input[@alt="' + alt_bntAceptarLogin + '"]').click()
 
+  return driver
   # password = config()['wbsites']['admin_users']['password']
-

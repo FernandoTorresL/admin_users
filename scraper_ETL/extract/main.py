@@ -9,6 +9,9 @@ from common import config
 # Import login procedure
 from login import get_access
 
+# Import navigate function
+from navigate import navigate_to_data
+
 # Get a reference to logging
 logger = logging.getLogger(__name__)
 
@@ -17,7 +20,8 @@ def _website_scraper(website_uid):
     host = config()['websites'][website_uid]['url']
 
     logging.info('Beginning scraper for {}'.format(host))
-    get_access(host)
+    driver = get_access(host, website_uid)
+    navigate_to_data(host, website_uid, driver)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
