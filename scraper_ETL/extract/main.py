@@ -77,17 +77,15 @@ def _count_rows(website_uid, driver):
 
     return total_rows
 
-def _fetch_record(website_uid, driver, page_number):
-    logger.info('Start fetching records at page {}'.format(page_number))
-
+def _fetch_record(all_rows, field_number):
     record = None
 
-    class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
-    class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
-    all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+    #class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
+    #class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
+    #all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
 
     try:
-        record = accounts.RecordRow(all_rows, page_number)
+        record = accounts.RecordRow(all_rows, field_number)
     except () as e:
         logger.warning('Error while fetching record', exc_info=False)
 
@@ -121,20 +119,22 @@ def _accounts_scraper(website_uid):
     total_pages = _count_pages(website_uid, driver)
     print('Total pages: ', total_pages)
 
-    # Count the rows...
-    class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
-    class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
-    total_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
-    total_rows = int(len(total_rows))
-
-    print('Total rows: ', total_rows)
-
     records = []
     # Recorriendo las páginas
     # for i in range(2, int(total_pages)):
     for i in range(2, 3):
-        print(i)
-        record = _fetch_record(website_uid, driver, 0)
+        logger.info('Start fetching records at Page #{}'.format(i))
+        # Count the rows...
+        class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
+        class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
+        all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+        total_fields = int(len(all_rows))
+
+        print('Total rows: ', total_fields / 5)
+
+        for j in range(0, 11, 5):
+            print("Fetching record #", int(j / 5 + 1))
+            record = _fetch_record(all_rows, j)
 
         if record:
             logger.info('Record fetched!!')
