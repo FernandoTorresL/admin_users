@@ -3,7 +3,6 @@ import logging
 import csv
 import datetime
 
-import accounts_page_objects as accounts
 # Import config file
 from common import config
 
@@ -78,32 +77,31 @@ def _count_rows(website_uid, driver):
     return total_rows
 
 def _fetch_record(all_rows, field_number):
-    record = None
 
-    #class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
-    #class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
-    #all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
-
-    try:
-        record = accounts.RecordRow(all_rows, field_number)
-    except () as e:
-        logger.warning('Error while fetching record', exc_info=False)
+    record = dict (
+        curp        = all_rows[field_number].text,
+        matricula   = all_rows[field_number + 1].text,
+        nombre      = all_rows[field_number + 2].text,
+        cuenta      = all_rows[field_number + 3].text,
+        grupo       = all_rows[field_number + 4].text
+        )
 
     return record
 
 def _save_records(website_uid, records):
-    now = datetime.datetime.now().strftime('%Y_%m_%d')
-    out_file_name = '{website_uid}_{datetime}_records.csv'.format(
+    now = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
+    out_file_name = '{website_uid}_{datetime}h_records.csv'.format(
         website_uid=website_uid,
         datetime=now)
-    csv_headers = list(filter(lambda property: not property.startswith('_'), dir(records[0])))
+    #csv_headers = list(filter(lambda property: not property.startswith('_'), dir(records[0])))
+    csv_headers = records[0].keys()
 
-    with open(out_file_name, mode='w+') as f:
+    with open(out_file_name, mode='w+', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(csv_headers)
 
         for record in records:
-            row = [str(getattr(record, prop)) for prop in csv_headers]
+            row = record.values()
             writer.writerow(row)
 
 def _accounts_scraper(website_uid):
@@ -137,35 +135,28 @@ def _accounts_scraper(website_uid):
     records = []
     # Recorriendo las páginas
     # for i in range(2, int(total_pages)):
-    for i in range(2, 3):
+    for i in range(1, 2):
         logger.info('Start fetching records at Page #{}'.format(i))
         # Count the rows...
         class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
         class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
         all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+
         total_fields = int(len(all_rows))
 
         print('Total rows: ', total_fields / 5)
 
-        for j in range(0, 11, 5):
-            print("Fetching record #", int(j / 5 + 1))
+        for j in range(0, total_fields, 5):
             record = _fetch_record(all_rows, j)
 
-        if record:
-            logger.info('Record fetched!!')
-            records.append(record)
-            print('     ', records)
+            if record:
+                logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
+                records.append(record)
+                print('     ', record['cuenta'])
         print('')
 
-    print(len(records))
-
-    print(records[0].curp)
-    print(records[0].matricula)
-    print(records[0].nombre)
-    print(records[0].cuenta)
-    print(records[0].grupo)
-
     _save_records(website_uid, records)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
