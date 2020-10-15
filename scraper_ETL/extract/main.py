@@ -2,6 +2,7 @@ import argparse
 import logging
 import csv
 import datetime
+import time
 
 # Import config file
 from common import config
@@ -58,14 +59,8 @@ def _count_pages(website_uid, driver):
     class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
     class_a = config()['websites'][website_uid]['labels']['page05']['class_a']
     pages = driver.find_element_by_xpath('//td[@class="' + class_td + '"]').find_elements_by_xpath('//a[@class="' + class_a + '"]')
-    pages
 
-    next_page = pages[0]
-    print('Next page is: ', next_page.text)
-
-    final_page = pages[1]
-
-    return final_page.text
+    return pages
 
 def _count_rows(website_uid, driver):
     # Count the rows...
@@ -129,31 +124,47 @@ def _accounts_scraper(website_uid):
     navigate_to_data(website_uid, driver)
 
     logging.info('Finding number of pages...')
-    total_pages = _count_pages(website_uid, driver)
+    pages = _count_pages(website_uid, driver)
+    total_pages = int(pages[1].text)
     print('Total pages: ', total_pages)
 
     records = []
     # Recorriendo las páginas
     # for i in range(2, int(total_pages)):
-    for i in range(1, 2):
-        logger.info('Start fetching records at Page #{}'.format(i))
+    for i in range(1, total_pages + 1):
+        logger.info('Start fetching records at page #{}'.format(i))
+        time.sleep(3)
         # Count the rows...
         class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
         class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
         all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
 
         total_fields = int(len(all_rows))
-
-        print('Total rows: ', total_fields / 5)
+        total_rows = int(total_fields / 5)
 
         for j in range(0, total_fields, 5):
             record = _fetch_record(all_rows, j)
 
             if record:
-                logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
+                #logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
                 records.append(record)
-                print('     ', record['cuenta'])
+                #print('     ', record['cuenta'])
+        print('Total rows: ', total_rows)
         print('')
+
+        num_pages = _count_pages(website_uid, driver)
+
+
+        last_page = (total_pages - 1)
+
+        if len(num_pages) == 2:
+            num_pages[0].click()
+        elif (len(num_pages) == 3 and i == last_page):
+            num_pages[2].click()
+        elif len(num_pages) == 3:
+            num_pages[1].click()
+        elif len(num_pages) == 4:
+            num_pages[2].click()
 
     _save_records(website_uid, records)
 

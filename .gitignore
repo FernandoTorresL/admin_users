@@ -242,4 +242,7 @@ $RECYCLE.BIN/
 # Selenium Chrome Driver
 /driver
 
+# CSV files
+*.csv
+
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudiocode,python,jupyternotebooks
