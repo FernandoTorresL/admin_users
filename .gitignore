@@ -245,4 +245,9 @@ $RECYCLE.BIN/
 # CSV files
 *.csv
 
+# Others
+/admin_users_NoGitHub
+OLDNotebook_admin_users.ipynb
+/.vscode
+
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudiocode,python,jupyternotebooks

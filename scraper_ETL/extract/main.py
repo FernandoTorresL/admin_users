@@ -128,12 +128,16 @@ def _accounts_scraper(website_uid):
     total_pages = int(pages[1].text)
     print('Total pages: ', total_pages)
 
+    # Get the pagination...
+    pagination01 = config()['websites'][website_uid]['labels']['page01']['url_pagination01']
+    pagination02 = config()['websites'][website_uid]['labels']['page01']['url_pagination02']
+
     records = []
+
     # Recorriendo las páginas
-    # for i in range(2, int(total_pages)):
     for i in range(1, total_pages + 1):
         logger.info('Start fetching records at page #{}'.format(i))
-        time.sleep(3)
+        time.sleep(1)
         # Count the rows...
         class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
         class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
@@ -152,22 +156,14 @@ def _accounts_scraper(website_uid):
         print('Total rows: ', total_rows)
         print('')
 
-        num_pages = _count_pages(website_uid, driver)
+        pagination = host + pagination01 + str(i - 1) + pagination02 + str(i)
 
-
-        last_page = (total_pages - 1)
-
-        if len(num_pages) == 2:
-            num_pages[0].click()
-        elif (len(num_pages) == 3 and i == last_page):
-            num_pages[2].click()
-        elif len(num_pages) == 3:
-            num_pages[1].click()
-        elif len(num_pages) == 4:
-            num_pages[2].click()
+        # Get the next page
+        if i != total_pages + 1:
+            driver.get(pagination)
 
     _save_records(website_uid, records)
-
+    driver.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
