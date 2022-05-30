@@ -1,19 +1,22 @@
-website_data:
-  url: http://1.1.1.1/site/
-  user: usuario
-  password: pwd
-  labels:
-    page01:
-      alt_bntAceptarLogin: ""
-    page02:
-      text_menuCtrlUsuarios: ""
-    page03:
-      name_selectMenu: ""
-      option_selectMenu: ""
-      alt_bntAceptarSelect: ""
-    page04:
-      alt_bntConsulta: ""
-    page05:
-      class_table: ""
-      class_td: ""
-      class_a: ""
+websites:
+  admin_users:
+    url: http://ip:port/GateAdministrator/
+    user: user
+    password: pwd
+    labels:
+      page01:
+        alt_bntAceptarLogin: "Entar al Sistema"
+        url_pagination01: "sort.do?layoutCollection=0&layoutCollectionProperty=&layoutCollectionState="
+        url_pagination02: "&pagerPage="
+      page02:
+        text_menuCtrlUsuarios: "Control de Usuarios"
+      page03:
+        name_selectMenu: "seleccionInicial"
+        option_selectMenu: "Consulta de Usuarios"
+        alt_bntAceptarSelect: "Entra al Sistema"
+      page04:
+        alt_bntConsulta: "Consultar"
+      page05:
+        class_table: "txt"
+        class_td: "txt"
+        class_a: "txt"

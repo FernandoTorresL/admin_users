@@ -1,15 +1,15 @@
 import argparse
-import logging
 import csv
 import datetime
+import logging
 import time
-
-# Import config file
-from common import config
 
 #Import selenium
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
+
+# Import config file
+from common import config
 
 # Get a reference to logging
 logging.basicConfig(level=logging.INFO)
@@ -107,7 +107,7 @@ def _accounts_scraper(website_uid):
     # Setup
     options = webdriver.ChromeOptions()
     options.add_argument('--incognito')
-    driver = webdriver.Chrome(executable_path='../../driver/chromedriver', options=options)
+    driver = webdriver.Chrome(executable_path='./chromedriver/chromedriver', options=options)
 
     # Get the site (driver)
     driver.get(host)
