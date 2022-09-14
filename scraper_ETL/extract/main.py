@@ -6,7 +6,10 @@ import time
 
 #Import selenium
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Import config file
 from common import config
@@ -23,11 +26,11 @@ def get_access(website_uid, driver):
     alt_bntAceptarLogin = config()['websites'][website_uid]['labels']['page01']['alt_bntAceptarLogin']
 
     # Login
-    driver.find_element_by_xpath('//input[@name="usuario"]').send_keys(user)
-    driver.find_element_by_xpath('//input[@name="pwd"]').send_keys(password)
+    driver.find_element('xpath', '//input[@name="usuario"]').send_keys(user)
+    driver.find_element('xpath', '//input[@name="pwd"]').send_keys(password)
 
     # Click to login... the element is an input without name and an alt tag defined on config.yaml:
-    driver.find_element_by_xpath('//input[@alt="' + alt_bntAceptarLogin + '"]').click()
+    driver.find_element('xpath', '//input[@alt="' + alt_bntAceptarLogin + '"]').click()
 
     return True
 
@@ -35,30 +38,30 @@ def navigate_to_data(website_uid, driver):
 
     # Locate the menu option
     text_menuCtrlUsuarios = config()['websites'][website_uid]['labels']['page02']['text_menuCtrlUsuarios']
-    driver.find_element_by_xpath('//a[text()="' + text_menuCtrlUsuarios + '"]').click()
+    driver.find_element('xpath', '//a[text()="' + text_menuCtrlUsuarios + '"]').click()
 
     # Now, the next element is a select menu...
     # ...first we get the name of the select menu
     name_selectMenu = config()['websites'][website_uid]['labels']['page03']['name_selectMenu']
 
     # ... Select the correct option
-    test = Select(driver.find_element_by_name(name_selectMenu))
+    test = Select(driver.find_element('name', name_selectMenu))
     option_selectMenu = config()['websites'][website_uid]['labels']['page03']['option_selectMenu']
     test.select_by_value(option_selectMenu)
 
     # Now, we had selected the option on the menu, click on button "Aceptar"
     alt_bntAceptarSelect = config()['websites'][website_uid]['labels']['page03']['alt_bntAceptarSelect']
-    driver.find_element_by_xpath('//img[@alt="' + alt_bntAceptarSelect + '"]').click()
+    driver.find_element('xpath', '//img[@alt="' + alt_bntAceptarSelect + '"]').click()
 
     # Query all the accounts and click on button
     alt_bntConsulta = config()['websites'][website_uid]['labels']['page04']['alt_bntConsulta']
-    driver.find_element_by_xpath('//img[@alt="' + alt_bntConsulta + '"]').click()
+    driver.find_element('xpath', '//img[@alt="' + alt_bntConsulta + '"]').click()
 
 def _count_pages(website_uid, driver):
     # Count the pages...
     class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
     class_a = config()['websites'][website_uid]['labels']['page05']['class_a']
-    pages = driver.find_element_by_xpath('//td[@class="' + class_td + '"]').find_elements_by_xpath('//a[@class="' + class_a + '"]')
+    pages = driver.find_element('xpath', '//td[@class="' + class_td + '"]').find_elements('xpath', '//a[@class="' + class_a + '"]')
 
     return pages
 
@@ -66,7 +69,7 @@ def _count_rows(website_uid, driver):
     # Count the rows...
     class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
     class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
-    total_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+    total_rows = driver.find_elements('xpath', '//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
     total_rows = int(len(total_rows))
 
     return total_rows
@@ -85,7 +88,7 @@ def _fetch_record(all_rows, field_number):
 
 def _save_records(website_uid, records):
     now = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-    out_file_name = '{website_uid}_{datetime}h_records.csv'.format(
+    out_file_name = './csv/{website_uid}_{datetime}h_records.csv'.format(
         website_uid=website_uid,
         datetime=now)
     #csv_headers = list(filter(lambda property: not property.startswith('_'), dir(records[0])))
@@ -105,9 +108,14 @@ def _accounts_scraper(website_uid):
     logging.info('Beginning scraper for {}'.format(host))
 
     # Setup
-    options = webdriver.ChromeOptions()
-    options.add_argument('--incognito')
-    driver = webdriver.Chrome(executable_path='./chromedriver/chromedriver', options=options)
+    # Con Windows
+    # cls.driver = webdriver.Chrome(executable_path = r'C://selenium/chromedriver.exe')
+
+    # Con MacOs
+    # cls.driver = webdriver.Chrome(executable_path = '../../../../chromedriver/mac64_m1/v103/chromedriver')
+
+    # With driver download automaticaly
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
 
     # Get the site (driver)
     driver.get(host)
@@ -141,7 +149,7 @@ def _accounts_scraper(website_uid):
         # Count the rows...
         class_table = config()['websites'][website_uid]['labels']['page05']['class_table']
         class_td = config()['websites'][website_uid]['labels']['page05']['class_td']
-        all_rows = driver.find_elements_by_xpath('//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+        all_rows = driver.find_elements('xpath', '//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
 
         total_fields = int(len(all_rows))
         total_rows = int(total_fields / 5)
