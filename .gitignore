@@ -253,3 +253,6 @@ OLDNotebook_admin_users.ipynb
 /.vscode
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudiocode,python,jupyternotebooks
+
+/scraper_ETL/extract/tmp
+/tmp_pandas_exercise
