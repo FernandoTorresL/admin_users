@@ -143,6 +143,18 @@ $
 (venv) $ cd scraper_ETL/extract
 (venv) $ python3 main.py --help
 ```
+#### Output
+```sh
+usage: main.py [-h] {admin_users}
+
+positional arguments:
+  {admin_users}  Argument: The website that you want to scrape
+
+options:
+  -h, --help     show this help message and exit
+```
+> If using another Python version try: python main.py --help
+
 
 ## Run the project
 
@@ -161,27 +173,6 @@ Then, you can execute the program.
 ## Output file
 
 * ./csv/admin_users_<datetime_stamp>_records.csv, CSV file with the data extracted from the site
-
-
-### How to test Web Scrapper
-
-- WORK IN PROGRESS
-
----
-
-## Test some particular ETL process
-
-- WORK IN PROGRESS
-
-### Transform process
-
-- WORK IN PROGRESS
-
-### Load process
-
-- WORK IN PROGRESS
-
----
 
 ## Contributing to this repo
 
