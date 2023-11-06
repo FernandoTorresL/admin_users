@@ -5,17 +5,17 @@ websites:
     password: pwd
     labels:
       page01:
-        alt_bntAceptarLogin: "Entar al Sistema"
+        bnt_aceptar: "Entar al Sistema"
         url_pagination01: "sort.do?layoutCollection=0&layoutCollectionProperty=&layoutCollectionState="
         url_pagination02: "&pagerPage="
       page02:
-        text_menuCtrlUsuarios: "Control de Usuarios"
+        menu_usuarios: "Control de Usuarios"
       page03:
-        name_selectMenu: "seleccionInicial"
-        option_selectMenu: "Consulta de Usuarios"
-        alt_bntAceptarSelect: "Entra al Sistema"
+        name_select_menu: "seleccionInicial"
+        option_select_menu: "Consulta de Usuarios"
+        bnt_entra: "Entra al Sistema"
       page04:
-        alt_bntConsulta: "Consultar"
+        bnt_cons: "Consultar"
       page05:
         class_table: "txt"
         class_td: "txt"
