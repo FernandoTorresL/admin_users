@@ -10,11 +10,11 @@
 
 ## Introduction
 
-From a website that use JavaScript, we will first create some instructions on a Jupyter Notebook to test a scrapper to get all the general data from that site by page.
-
 There´s a system that it's operated by workers of the _Coordinación de Afiliación - División de Soporte a los Procesos de Afiliación_, an office on Instituto Mexicano del Seguro Social (IMSS, DIR, CA, DSPA).
 
 This code must login, navigate, and scrap pages from this site to create a CSV file.
+
+From this website that use JavaScript, we also create and test some instructions on a Jupyter Notebook to test a scrapper to get all the general data from that site by page.
 
 ## Technology used
 
@@ -25,7 +25,8 @@ This project was build with the use of:
 - Jupyter notebooks (for test and debug)
 
 ## Important
-The website and the data are confidential because come from an intranet site.
+
+The website and the data are confidential because are from an intranet site.
 So, the real url is on a secret **config.yaml** production file.
 This file defines what are the urls, the XPath strings, titles and body from that site.
 
