@@ -4,11 +4,14 @@ import datetime
 import logging
 import time
 
+import chromedriver_autoinstaller
+# import chromedriver_binary
 # Import config file
 from common import config
 # Import selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.service import Service as FirefoxService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from webdriver_manager.chrome import ChromeDriverManager
@@ -44,6 +47,9 @@ def navigate_to_data(website_uid, driver):
     )['websites'][website_uid]['labels']['page02']['text_menuCtrlUsuarios']
     driver.find_element(
         'xpath', '//a[text()="' + text_menuCtrlUsuarios + '"]').click()
+
+
+def navigate_to_data2(website_uid, driver):
 
     # Now, the next element is a select menu...
     # ...first we get the name of the select menu
@@ -106,6 +112,100 @@ def _fetch_record(all_rows, field_number):
     return record
 
 
+def _get_record_details(driver, website_uid, cuentas):
+
+    detalle_cuentas = []
+
+    alt_bntConsulta = config()[
+        'websites'][website_uid]['labels']['page04']['alt_bntConsulta']
+
+    pag_consulta = config()[
+        'websites'][website_uid]['labels']['page04']['direct_link_to_consulta']
+
+    for cuenta in cuentas:
+        driver.find_element(
+            'xpath', '/html/body/form/table[2]/tbody/tr[5]/td[2]/input').send_keys(cuenta)
+        driver.find_element(
+            'xpath', '//img[@alt="' + alt_bntConsulta + '"]').click()
+        time.sleep(1)
+
+        input_curp = driver.find_element('name', 'curp')
+        curp = input_curp.get_attribute('value')
+
+        matricula = driver.find_element(
+            'name', 'matricula').get_attribute('value')
+
+        area = Select(driver.find_element('name', 'area')
+                      ).first_selected_option.text
+        genero = Select(driver.find_element('name', 'genero')
+                        ).first_selected_option.text
+        nombre = driver.find_element('name', 'nombre').get_attribute('value')
+        apellido_pat = driver.find_element(
+            'name', 'apellidoPat').get_attribute('value')
+        apellido_mat = driver.find_element(
+            'name', 'apellidoMat').get_attribute('value')
+        telefono = driver.find_element(
+            'name', 'telefono').get_attribute('value')
+        email = driver.find_element('name', 'email').get_attribute('value')
+        grupo = Select(driver.find_element('name', 'idGrupo')
+                       ).first_selected_option.text
+        usrnametxt = driver.find_element(
+            'name', 'usrnametxt').get_attribute('value')
+
+        detalle_cuenta = dict(
+            usuario=usrnametxt,
+            grupo=grupo,
+            curp=curp,
+            matricula=matricula,
+            area=area,
+            genero=genero,
+            nombre=nombre,
+            apellido_p=apellido_pat,
+            apellido_m=apellido_mat,
+            telefono=telefono,
+            email=email
+        )
+
+        detalle_cuentas.append(detalle_cuenta)
+
+        print('-----')
+        print('     ', cuenta)
+        """ print('     ', usrnametxt)
+        print('     ', curp)
+        print('     ', matricula)
+        print('     ', area)
+        print('     ', genero)
+        print('     ', nombre)
+        print('     ', apellido_pat)
+        print('     ', apellido_mat)
+        print('     ', telefono)
+        print('     ', email)
+        print('     ', grupo) """
+
+        # driver.get(pag_consulta)
+
+        navigate_to_data2(website_uid, driver)
+
+    return detalle_cuentas
+
+
+def _save_cuentas_details(website_uid, detalle_cuentas):
+    now = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
+    out_file_name = './csv/{website_uid}_{datetime}h_detalle_cuentas.csv'.format(
+        website_uid=website_uid,
+        datetime=now)
+
+    csv_headers = 'usuario,grupo,curp,matricula,area,genero,nombre,apellido_paterno,apellido_materno,telefono,email'
+
+    with open(out_file_name, mode='w+', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(csv_headers)
+
+        for detalle_cuenta in detalle_cuentas:
+            row = detalle_cuenta.values()
+            writer.writerow(row)
+
+
 def _save_records(website_uid, records):
     now = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
     out_file_name = './csv/{website_uid}_{datetime}h_records.csv'.format(
@@ -128,16 +228,40 @@ def _accounts_scraper(website_uid):
     host = config()['websites'][website_uid]['url']
     logging.info('Beginning scraper for {}'.format(host))
 
+    # Testing with older version of Chrome
+    # Check if the current version of chromedriver exists
+    # chromedriver_autoinstaller.install()
+    # and if it doesn't exist, download it automatically,
+    # then add chromedriver to path
+
+    # driver = webdriver.Chrome()
+    # driver.get("http://www.python.org")
+    # assert "Python" in driver.title
+    # END of Testing with older version of Chrome
+
     # Setup
     # Con Windows
     # cls.driver = webdriver.Chrome(executable_path = r'C://selenium/chromedriver.exe')
 
     # Con MacOs
-    # cls.driver = webdriver.Chrome(executable_path = '../../../../chromedriver/mac64_m1/v103/chromedriver')
+    # driver = webdriver.Chrome(
+    #    executable_path='../../../../chromedriver/mac64_m1/v105/chromedriver')
+    # driver = webdriver.Chrome(executable_path='/usr/bin/brave-browser')
 
     # With driver download automaticaly
-    driver = webdriver.Chrome(service=ChromeService(
-        ChromeDriverManager().install()))
+    # driver = webdriver.Chrome(service=ChromeService(
+    #    ChromeDriverManager().install()))
+
+    # Test #2
+    # With driver download automaticaly
+    # driver = webdriver.Chrome(service=ChromeService())
+    # driver = webdriver.Firefox(service=ChromeService())
+    from selenium import webdriver
+    from selenium.webdriver.firefox.service import Service as FirefoxService
+    from webdriver_manager.firefox import GeckoDriverManager
+
+    driver = webdriver.Firefox(
+        service=FirefoxService(GeckoDriverManager().install()))
 
     # Get the site (driver)
     driver.get(host)
@@ -153,6 +277,9 @@ def _accounts_scraper(website_uid):
     # Navigate to data
     navigate_to_data(website_uid, driver)
 
+    # Navigate to data part 2
+    navigate_to_data2(website_uid, driver)
+
     logging.info('Finding number of pages...')
     pages = _count_pages(website_uid, driver)
     total_pages = int(pages[1].text)
@@ -165,11 +292,13 @@ def _accounts_scraper(website_uid):
         'websites'][website_uid]['labels']['page01']['url_pagination02']
 
     records = []
+    cuentas = []
 
     # Recorriendo las páginas
     for i in range(1, total_pages + 1):
+        # for i in range(1, 2):
         logger.info('Start fetching records at page #{}'.format(i))
-        time.sleep(1)
+        # time.sleep(1)
         # Count the rows...
         class_table = config()[
             'websites'][website_uid]['labels']['page05']['class_table']
@@ -187,6 +316,7 @@ def _accounts_scraper(website_uid):
             if record:
                 # logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
                 records.append(record)
+                cuentas.append(record['cuenta'])
                 # print('     ', record['cuenta'])
         print('Total rows: ', total_rows)
         print('')
@@ -198,6 +328,11 @@ def _accounts_scraper(website_uid):
             driver.get(pagination)
 
     _save_records(website_uid, records)
+
+    # detalle_cuentas = _get_record_details(driver, website_uid, cuentas)
+
+    # _save_cuentas_details(website_uid, detalle_cuentas)
+
     driver.close()
 
 
