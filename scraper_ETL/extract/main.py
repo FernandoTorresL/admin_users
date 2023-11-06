@@ -1,20 +1,35 @@
+"""
+
+    Returns:
+
+    """
+
 import argparse
 import csv
 import datetime
 import logging
 import time
 
-import chromedriver_autoinstaller
 # import chromedriver_binary
 # Import config file
 from common import config
-# Import selenium
+
+# from selenium.webdriver.common.by import By
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.service import Service as FirefoxService
-from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.support.select import Select
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+
+# import chromedriver_autoinstaller
+
+
+# Import selenium
+# from selenium import webdriver
+# from selenium.webdriver.chrome.service import Service as ChromeService
+# from selenium.webdriver.chrome.service import Service as FirefoxService
+
+
+# from webdriver_manager.chrome import ChromeDriverManager
 
 # Get a reference to logging
 logging.basicConfig(level=logging.INFO)
@@ -22,135 +37,229 @@ logger = logging.getLogger(__name__)
 
 
 def get_access(website_uid, driver):
-    # Get the credential data
-    user = config()['websites'][website_uid]['user']
-    password = config()['websites'][website_uid]['password']
+    """
 
-    alt_bntAceptarLogin = config(
-    )['websites'][website_uid]['labels']['page01']['alt_bntAceptarLogin']
+    Returns:
+
+    """
+
+    # Get the credential data
+    base_config = config()["websites"][website_uid]
+
+    user = base_config["user"]
+    password = base_config["password"]
+
+    bnt_aceptar = base_config["labels"]["page01"]["bnt_aceptar"]
 
     # Login
-    driver.find_element('xpath', '//input[@name="usuario"]').send_keys(user)
-    driver.find_element('xpath', '//input[@name="pwd"]').send_keys(password)
-
-    # Click to login... the element is an input without name and an alt tag defined on config.yaml:
     driver.find_element(
-        'xpath', '//input[@alt="' + alt_bntAceptarLogin + '"]').click()
+        "xpath",
+        "//input[@name='usuario']",
+    ).send_keys(user)
+    driver.find_element(
+        "xpath",
+        "//input[@name='pwd']",
+    ).send_keys(password)
+
+    # Click to login...the element is an input without name ...
+    # ...and an alt tag defined on config.yaml:
+    driver.find_element(
+        "xpath",
+        "//input[@alt='" + bnt_aceptar + "']",
+    ).click()
 
     return True
 
 
 def navigate_to_data(website_uid, driver):
+    """
+
+    Returns:
+
+    """
 
     # Locate the menu option
-    text_menuCtrlUsuarios = config(
-    )['websites'][website_uid]['labels']['page02']['text_menuCtrlUsuarios']
+    base_config = config()["websites"][website_uid]["labels"]
+    menu_ctrl = base_config["page02"]["menu_usuarios"]
     driver.find_element(
-        'xpath', '//a[text()="' + text_menuCtrlUsuarios + '"]').click()
+        "xpath",
+        "//a[text()='" + menu_ctrl + "']",
+    ).click()
 
 
 def navigate_to_data2(website_uid, driver):
+    """
+
+    Returns:
+
+    """
 
     # Now, the next element is a select menu...
     # ...first we get the name of the select menu
-    name_selectMenu = config(
-    )['websites'][website_uid]['labels']['page03']['name_selectMenu']
+    base_config = config()["websites"][website_uid]["labels"]
+    name_select_menu = base_config["page03"]["name_select_menu"]
 
     # ... Select the correct option
-    test = Select(driver.find_element('name', name_selectMenu))
-    option_selectMenu = config(
-    )['websites'][website_uid]['labels']['page03']['option_selectMenu']
-    test.select_by_value(option_selectMenu)
+    test = Select(driver.find_element("name", name_select_menu))
+    option_select_menu = base_config["page03"]["option_select_menu"]
+    test.select_by_value(option_select_menu)
 
     # Now, we had selected the option on the menu, click on button "Aceptar"
-    alt_bntAceptarSelect = config(
-    )['websites'][website_uid]['labels']['page03']['alt_bntAceptarSelect']
+    bnt_entra = base_config["page03"]["bnt_entra"]
     driver.find_element(
-        'xpath', '//img[@alt="' + alt_bntAceptarSelect + '"]').click()
+        "xpath",
+        '//img[@alt="' + bnt_entra + '"]',
+    ).click()
 
     # Query all the accounts and click on button
-    alt_bntConsulta = config(
-    )['websites'][website_uid]['labels']['page04']['alt_bntConsulta']
+    bnt_cons = base_config["page04"]["bnt_cons"]
     driver.find_element(
-        'xpath', '//img[@alt="' + alt_bntConsulta + '"]').click()
+        "xpath",
+        '//img[@alt="' + bnt_cons + '"]',
+    ).click()
 
 
 def _count_pages(website_uid, driver):
+    """
+
+    Returns:
+
+    """
+
     # Count the pages...
-    class_td = config()[
-        'websites'][website_uid]['labels']['page05']['class_td']
-    class_a = config()['websites'][website_uid]['labels']['page05']['class_a']
+    base_config = config()["websites"][website_uid]["labels"]
+    class_td = base_config["page05"]["class_td"]
+    class_a = base_config["page05"]["class_a"]
     pages = driver.find_element(
-        'xpath', '//td[@class="' + class_td + '"]').find_elements('xpath', '//a[@class="' + class_a + '"]')
+        "xpath",
+        "//td[@class='" + class_td + "']",
+    ).find_elements(
+        "xpath",
+        "//a[@class='" + class_a + "']",
+    )
 
     return pages
 
 
 def _count_rows(website_uid, driver):
+    """
+
+    Returns:
+
+    """
+
     # Count the rows...
-    class_table = config()[
-        'websites'][website_uid]['labels']['page05']['class_table']
-    class_td = config()[
-        'websites'][website_uid]['labels']['page05']['class_td']
+    base_config = config()["websites"][website_uid]["labels"]
+    class_table = base_config["page05"]["class_table"]
+    class_td = base_config["page05"]["class_td"]
     total_rows = driver.find_elements(
-        'xpath', '//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+        "xpath",
+        "//table[@class='"
+        + class_table
+        + "']/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, '"
+        + class_td
+        + "')]",
+    )
     total_rows = int(len(total_rows))
 
     return total_rows
 
 
 def _fetch_record(all_rows, field_number):
+    """
+
+    Returns:
+
+    """
 
     record = dict(
         curp=all_rows[field_number].text,
         matricula=all_rows[field_number + 1].text,
         nombre=all_rows[field_number + 2].text,
         cuenta=all_rows[field_number + 3].text,
-        grupo=all_rows[field_number + 4].text
+        grupo=all_rows[field_number + 4].text,
     )
 
     return record
 
 
 def _get_record_details(driver, website_uid, cuentas):
+    """
+
+    Returns:
+
+    """
 
     detalle_cuentas = []
 
-    alt_bntConsulta = config()[
-        'websites'][website_uid]['labels']['page04']['alt_bntConsulta']
+    base_config = config()["websites"][website_uid]["labels"]
+    bnt_cons = base_config["page04"]["bnt_cons"]
 
-    pag_consulta = config()[
-        'websites'][website_uid]['labels']['page04']['direct_link_to_consulta']
+    # pag_consulta = base_config["page04"]["direct_link_to_consulta"]
 
     for cuenta in cuentas:
         driver.find_element(
-            'xpath', '/html/body/form/table[2]/tbody/tr[5]/td[2]/input').send_keys(cuenta)
+            "xpath",
+            "/html/body/form/table[2]/tbody/tr[5]/td[2]/input",
+        ).send_keys(cuenta)
         driver.find_element(
-            'xpath', '//img[@alt="' + alt_bntConsulta + '"]').click()
+            "xpath",
+            "//img[@alt='" + bnt_cons + "']",
+        ).click()
         time.sleep(1)
 
-        input_curp = driver.find_element('name', 'curp')
-        curp = input_curp.get_attribute('value')
+        input_curp = driver.find_element("name", "curp")
+        curp = input_curp.get_attribute("value")
 
         matricula = driver.find_element(
-            'name', 'matricula').get_attribute('value')
+            "name",
+            "matricula",
+        ).get_attribute("value")
 
-        area = Select(driver.find_element('name', 'area')
-                      ).first_selected_option.text
-        genero = Select(driver.find_element('name', 'genero')
-                        ).first_selected_option.text
-        nombre = driver.find_element('name', 'nombre').get_attribute('value')
+        area = Select(
+            driver.find_element("name", "area"),
+        ).first_selected_option.text
+
+        genero = Select(
+            driver.find_element("name", "genero"),
+        ).first_selected_option.text
+
+        nombre = driver.find_element(
+            "name",
+            "nombre",
+        ).get_attribute("value")
+
         apellido_pat = driver.find_element(
-            'name', 'apellidoPat').get_attribute('value')
+            "name",
+            "apellidoPat",
+        ).get_attribute("value")
+
         apellido_mat = driver.find_element(
-            'name', 'apellidoMat').get_attribute('value')
+            "name",
+            "apellidoMat",
+        ).get_attribute("value")
+
         telefono = driver.find_element(
-            'name', 'telefono').get_attribute('value')
-        email = driver.find_element('name', 'email').get_attribute('value')
-        grupo = Select(driver.find_element('name', 'idGrupo')
-                       ).first_selected_option.text
+            "name",
+            "telefono",
+        ).get_attribute("value")
+
+        email = driver.find_element(
+            "name",
+            "email",
+        ).get_attribute("value")
+
+        grupo = Select(
+            driver.find_element(
+                "name",
+                "idGrupo",
+            )
+        ).first_selected_option.text
+
         usrnametxt = driver.find_element(
-            'name', 'usrnametxt').get_attribute('value')
+            "name",
+            "usrnametxt",
+        ).get_attribute("value")
 
         detalle_cuenta = dict(
             usuario=usrnametxt,
@@ -163,24 +272,13 @@ def _get_record_details(driver, website_uid, cuentas):
             apellido_p=apellido_pat,
             apellido_m=apellido_mat,
             telefono=telefono,
-            email=email
+            email=email,
         )
 
         detalle_cuentas.append(detalle_cuenta)
 
-        print('-----')
-        print('     ', cuenta)
-        """ print('     ', usrnametxt)
-        print('     ', curp)
-        print('     ', matricula)
-        print('     ', area)
-        print('     ', genero)
-        print('     ', nombre)
-        print('     ', apellido_pat)
-        print('     ', apellido_mat)
-        print('     ', telefono)
-        print('     ', email)
-        print('     ', grupo) """
+        print("-----")
+        print("     ", cuenta)
 
         # driver.get(pag_consulta)
 
@@ -190,14 +288,18 @@ def _get_record_details(driver, website_uid, cuentas):
 
 
 def _save_cuentas_details(website_uid, detalle_cuentas):
-    now = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-    out_file_name = './csv/{website_uid}_{datetime}h_detalle_cuentas.csv'.format(
+    now = datetime.datetime.now().strftime("%Y_%m_%d_%H%M")
+    out_file_name = "./csv/{website_uid}_{datetime}h_detalle_cuentas.csv"
+    out_file_name = out_file_name.format(
         website_uid=website_uid,
-        datetime=now)
+        datetime=now,
+    )
 
-    csv_headers = 'usuario,grupo,curp,matricula,area,genero,nombre,apellido_paterno,apellido_materno,telefono,email'
+    csv_headers = "usuario,grupo,curp,matricula,area,genero,"
+    csv_headers += "nombre,apellido_paterno,apellido_materno,"
+    csv_headers += "telefono,email"
 
-    with open(out_file_name, mode='w+', newline='', encoding='utf-8') as f:
+    with open(out_file_name, mode="w+", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(csv_headers)
 
@@ -207,14 +309,17 @@ def _save_cuentas_details(website_uid, detalle_cuentas):
 
 
 def _save_records(website_uid, records):
-    now = datetime.datetime.now().strftime('%Y_%m_%d_%H%M')
-    out_file_name = './csv/{website_uid}_{datetime}h_records.csv'.format(
-        website_uid=website_uid,
-        datetime=now)
-    # csv_headers = list(filter(lambda property: not property.startswith('_'), dir(records[0])))
+    now = datetime.datetime.now().strftime("%Y_%m_%d_%H%M")
+
+    out_file_name = f"./csv/{website_uid}_{now}h_records.csv"
+
+    # out_file_name = "./csv/{website_uid}_{datetime}h_records.csv".format(
+    #    website_uid=website_uid, datetime=now
+    # )
+
     csv_headers = records[0].keys()
 
-    with open(out_file_name, mode='w+', newline='', encoding='utf-8') as f:
+    with open(out_file_name, mode="w+", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(csv_headers)
 
@@ -225,8 +330,9 @@ def _save_records(website_uid, records):
 
 def _accounts_scraper(website_uid):
     # Get the url of the website (parameter)
-    host = config()['websites'][website_uid]['url']
-    logging.info('Beginning scraper for {}'.format(host))
+    host = config()["websites"][website_uid]["url"]
+
+    logging.info("Beginning scraper for %s", host)
 
     # Testing with older version of Chrome
     # Check if the current version of chromedriver exists
@@ -241,7 +347,8 @@ def _accounts_scraper(website_uid):
 
     # Setup
     # Con Windows
-    # cls.driver = webdriver.Chrome(executable_path = r'C://selenium/chromedriver.exe')
+    # cls.driver =
+    # webdriver.Chrome(executable_path = r'C://selenium/chromedriver.exe')
 
     # Con MacOs
     # driver = webdriver.Chrome(
@@ -256,12 +363,16 @@ def _accounts_scraper(website_uid):
     # With driver download automaticaly
     # driver = webdriver.Chrome(service=ChromeService())
     # driver = webdriver.Firefox(service=ChromeService())
-    from selenium import webdriver
-    from selenium.webdriver.firefox.service import Service as FirefoxService
-    from webdriver_manager.firefox import GeckoDriverManager
+
+    # from selenium import webdriver
+    # from selenium.webdriver.firefox.service import Service as FirefoxService
+    # from webdriver_manager.firefox import GeckoDriverManager
 
     driver = webdriver.Firefox(
-        service=FirefoxService(GeckoDriverManager().install()))
+        service=FirefoxService(
+            GeckoDriverManager().install(),
+        ),
+    )
 
     # Get the site (driver)
     driver.get(host)
@@ -269,10 +380,10 @@ def _accounts_scraper(website_uid):
     # Try login
     login = get_access(website_uid, driver)
     if not login:
-        logger.warning('Error on login', exc_info=False)
+        logger.warning("Error on login", exc_info=False)
     else:
-        logger.info('Successful login!!')
-    print('')
+        logger.info("Successful login!!")
+    print("")
 
     # Navigate to data
     navigate_to_data(website_uid, driver)
@@ -280,16 +391,15 @@ def _accounts_scraper(website_uid):
     # Navigate to data part 2
     navigate_to_data2(website_uid, driver)
 
-    logging.info('Finding number of pages...')
+    logging.info("Finding number of pages...")
     pages = _count_pages(website_uid, driver)
     total_pages = int(pages[1].text)
-    print('Total pages: ', total_pages)
+    print("Total pages: ", total_pages)
 
     # Get the pagination...
-    pagination01 = config()[
-        'websites'][website_uid]['labels']['page01']['url_pagination01']
-    pagination02 = config()[
-        'websites'][website_uid]['labels']['page01']['url_pagination02']
+    base_config = config()["websites"][website_uid]["labels"]
+    pagination01 = base_config["page01"]["url_pagination01"]
+    pagination02 = base_config["page01"]["url_pagination02"]
 
     records = []
     cuentas = []
@@ -297,15 +407,20 @@ def _accounts_scraper(website_uid):
     # Recorriendo las páginas
     for i in range(1, total_pages + 1):
         # for i in range(1, 2):
-        logger.info('Start fetching records at page #{}'.format(i))
+        logger.info("Start fetching records at page #%s", i)
         # time.sleep(1)
         # Count the rows...
-        class_table = config()[
-            'websites'][website_uid]['labels']['page05']['class_table']
-        class_td = config()[
-            'websites'][website_uid]['labels']['page05']['class_td']
+        class_table = base_config["page05"]["class_table"]
+        class_td = base_config["page05"]["class_td"]
         all_rows = driver.find_elements(
-            'xpath', '//table[@class="' + class_table + '"]/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, "' + class_td + '")]')
+            "xpath",
+            "//table[@class='"
+            + class_table
+            + "']/tbody/tr/td/table/tbody/"
+            + "tr[not(@valign)]/td[contains(@class, '"
+            + class_td
+            + "')]",
+        )
 
         total_fields = int(len(all_rows))
         total_rows = int(total_fields / 5)
@@ -316,10 +431,10 @@ def _accounts_scraper(website_uid):
             if record:
                 # logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
                 records.append(record)
-                cuentas.append(record['cuenta'])
+                cuentas.append(record["cuenta"])
                 # print('     ', record['cuenta'])
-        print('Total rows: ', total_rows)
-        print('')
+        print("Total rows: ", total_rows)
+        print("")
 
         pagination = host + pagination01 + str(i - 1) + pagination02 + str(i)
 
@@ -336,15 +451,17 @@ def _accounts_scraper(website_uid):
     driver.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Build the list of choices
-    websites_choices = list(config()['websites'].keys())
-    parser.add_argument('website',
-                        help='Argument: The website that you want to scrape',
-                        type=str,
-                        choices=websites_choices)
+    websites_choices = list(config()["websites"].keys())
+    parser.add_argument(
+        "website",
+        help="Argument: The website that you want to scrape",
+        type=str,
+        choices=websites_choices,
+    )
 
     # Parser the arguments
     args = parser.parse_args()
