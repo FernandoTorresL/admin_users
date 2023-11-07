@@ -16,6 +16,7 @@ from common import config
 
 # from selenium.webdriver.common.by import By
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.support.select import Select
 from webdriver_manager.firefox import GeckoDriverManager
@@ -111,7 +112,16 @@ def navigate_to_data2(website_uid, driver):
         '//img[@alt="' + bnt_entra + '"]',
     ).click()
 
+
+def navigate_to_data3(website_uid, driver):
+    """
+
+    Returns:
+
+    """
+
     # Query all the accounts and click on button
+    base_config = config()["websites"][website_uid]["labels"]
     bnt_cons = base_config["page04"]["bnt_cons"]
     driver.find_element(
         "xpath",
@@ -141,30 +151,6 @@ def _count_pages(website_uid, driver):
     return pages
 
 
-def _count_rows(website_uid, driver):
-    """
-
-    Returns:
-
-    """
-
-    # Count the rows...
-    base_config = config()["websites"][website_uid]["labels"]
-    class_table = base_config["page05"]["class_table"]
-    class_td = base_config["page05"]["class_td"]
-    total_rows = driver.find_elements(
-        "xpath",
-        "//table[@class='"
-        + class_table
-        + "']/tbody/tr/td/table/tbody/tr[not(@valign)]/td[contains(@class, '"
-        + class_td
-        + "')]",
-    )
-    total_rows = int(len(total_rows))
-
-    return total_rows
-
-
 def _fetch_record(all_rows, field_number):
     """
 
@@ -183,31 +169,18 @@ def _fetch_record(all_rows, field_number):
     return record
 
 
-def _get_record_details(driver, website_uid, cuentas):
-    """
+def _get_record_details(driver, account):
+    """_get_record_details _summary_
+
+    _extended_summary_
 
     Returns:
-
+        _type_: _description_
     """
 
-    detalle_cuentas = []
+    # time.sleep(1)
 
-    base_config = config()["websites"][website_uid]["labels"]
-    bnt_cons = base_config["page04"]["bnt_cons"]
-
-    # pag_consulta = base_config["page04"]["direct_link_to_consulta"]
-
-    for cuenta in cuentas:
-        driver.find_element(
-            "xpath",
-            "/html/body/form/table[2]/tbody/tr[5]/td[2]/input",
-        ).send_keys(cuenta)
-        driver.find_element(
-            "xpath",
-            "//img[@alt='" + bnt_cons + "']",
-        ).click()
-        time.sleep(1)
-
+    try:
         input_curp = driver.find_element("name", "curp")
         curp = input_curp.get_attribute("value")
 
@@ -262,8 +235,6 @@ def _get_record_details(driver, website_uid, cuentas):
         ).get_attribute("value")
 
         detalle_cuenta = dict(
-            usuario=usrnametxt,
-            grupo=grupo,
             curp=curp,
             matricula=matricula,
             area=area,
@@ -273,31 +244,40 @@ def _get_record_details(driver, website_uid, cuentas):
             apellido_m=apellido_mat,
             telefono=telefono,
             email=email,
+            grupo=grupo,
+            usuario=usrnametxt,
         )
+    except NoSuchElementException:
+        detalle_cuenta = dict(
+            curp="null",
+            matricula="null",
+            area="null",
+            genero="null",
+            nombre="null",
+            apellido_p="null",
+            apellido_m="null",
+            telefono="null",
+            email="null",
+            grupo="null",
+            usuario=account,
+        )
+        print("Account not found.")
+        return detalle_cuenta
 
-        detalle_cuentas.append(detalle_cuenta)
-
-        print("-----")
-        print("     ", cuenta)
-
-        # driver.get(pag_consulta)
-
-        navigate_to_data2(website_uid, driver)
-
-    return detalle_cuentas
+    return detalle_cuenta
 
 
 def _save_cuentas_details(website_uid, detalle_cuentas):
     now = datetime.datetime.now().strftime("%Y_%m_%d_%H%M")
-    out_file_name = "./csv/{website_uid}_{datetime}h_detalle_cuentas.csv"
+
+    out_file_name = f"./csv/{website_uid}_{now}h_detalle_cuentas.csv"
+
     out_file_name = out_file_name.format(
         website_uid=website_uid,
         datetime=now,
     )
 
-    csv_headers = "usuario,grupo,curp,matricula,area,genero,"
-    csv_headers += "nombre,apellido_paterno,apellido_materno,"
-    csv_headers += "telefono,email"
+    csv_headers = detalle_cuentas[0].keys()
 
     with open(out_file_name, mode="w+", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -312,10 +292,6 @@ def _save_records(website_uid, records):
     now = datetime.datetime.now().strftime("%Y_%m_%d_%H%M")
 
     out_file_name = f"./csv/{website_uid}_{now}h_records.csv"
-
-    # out_file_name = "./csv/{website_uid}_{datetime}h_records.csv".format(
-    #    website_uid=website_uid, datetime=now
-    # )
 
     csv_headers = records[0].keys()
 
@@ -391,6 +367,9 @@ def _accounts_scraper(website_uid):
     # Navigate to data part 2
     navigate_to_data2(website_uid, driver)
 
+    # Navigate to data part 3
+    navigate_to_data3(website_uid, driver)
+
     logging.info("Finding number of pages...")
     pages = _count_pages(website_uid, driver)
     total_pages = int(pages[1].text)
@@ -403,6 +382,7 @@ def _accounts_scraper(website_uid):
 
     records = []
     cuentas = []
+    lista_cuentas = []
 
     # Recorriendo las páginas
     for i in range(1, total_pages + 1):
@@ -432,7 +412,8 @@ def _accounts_scraper(website_uid):
                 # logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
                 records.append(record)
                 cuentas.append(record["cuenta"])
-                # print('     ', record['cuenta'])
+                # print("     ", record["cuenta"])
+                lista_cuentas.append(record["cuenta"])
         print("Total rows: ", total_rows)
         print("")
 
@@ -442,13 +423,47 @@ def _accounts_scraper(website_uid):
         if i != total_pages + 1:
             driver.get(pagination)
 
+    # Save account's list (without details)
     _save_records(website_uid, records)
 
-    # detalle_cuentas = _get_record_details(driver, website_uid, cuentas)
+    # Get details
+    detalle_cuentas = _get_accounts_details(website_uid, driver, lista_cuentas)
 
-    # _save_cuentas_details(website_uid, detalle_cuentas)
+    # Save details to file
+    _save_cuentas_details(website_uid, detalle_cuentas)
 
     driver.close()
+
+
+def _get_accounts_details(website_uid, driver, lista_cuentas):
+    detalle_cuentas = []
+    i = 0
+
+    for account in lista_cuentas:
+        i += 1
+
+        print(f"Registro {account}, #{i} de {len(lista_cuentas)}")
+
+        # Search an specific account:
+        host = config()["websites"][website_uid]["url"]
+        url_detail = config()["websites"][website_uid]["url_detail"]
+
+        driver.get(host + url_detail + account)
+
+        # driver.find_element("name", "id_login").send_keys(account)
+
+        # navigate_to_data3(website_uid, driver)
+
+        detalle_cuenta = _get_record_details(driver, account)
+
+        detalle_cuentas.append(detalle_cuenta)
+
+        # host = config()["websites"][website_uid]["url"]
+        # url_consulta = config()["websites"][website_uid]["url_consulta"]
+
+        # driver.get(host + url_consulta)
+
+    return detalle_cuentas
 
 
 if __name__ == "__main__":
@@ -465,4 +480,5 @@ if __name__ == "__main__":
 
     # Parser the arguments
     args = parser.parse_args()
+
     _accounts_scraper(args.website)

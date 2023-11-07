@@ -47,15 +47,15 @@ website_data:
 ```
 ## Installation
 
-### Clone repo
+### Clone this repo
 
 ```sh
 git clone git@github.com:FernandoTorresL/admin_users.git
 ```
-> Optional: You can change *<my_folder>* on this instruction to create a new folder
+> Optional: You can use and change *<my_folder>* on this instruction to create a new folder instead of the default *admin_users*
 
 ```sh
-git clone git@github.com:FernandoTorresL/admin_users.git <my_folder> 
+git clone git@github.com:FernandoTorresL/admin_users.git <my_folder>
 ```
 
 ### Create/Copy initial files (only placeholder_file.txt on GitHub)
@@ -64,17 +64,6 @@ You must create o paste some files on place:
 
 - A .yaml file on scraper_ETL/extract folder, based on config.example.yaml
 
-### Clone this repo
-
-```cmd
-git clone git@github.com:FernandoTorresL/admin_users.git
-```
-
-You can use and change *<my_folder>* on this instruction to create a new folder instead of the default *admin_users*
-
-```cmd
-git clone git@github.com:FernandoTorresL/admin_users.git <my_folder>
-```
 ### Change to working directory and create a Python virtual environment
 
 OS X & Linux:
