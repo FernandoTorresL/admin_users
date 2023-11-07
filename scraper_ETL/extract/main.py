@@ -37,41 +37,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_access(website_uid, driver):
-    """
-
-    Returns:
-
-    """
-
-    # Get the credential data
-    base_config = config()["websites"][website_uid]
-
-    user = base_config["user"]
-    password = base_config["password"]
-
-    bnt_aceptar = base_config["labels"]["page01"]["bnt_aceptar"]
-
-    # Login
-    driver.find_element(
-        "xpath",
-        "//input[@name='usuario']",
-    ).send_keys(user)
-    driver.find_element(
-        "xpath",
-        "//input[@name='pwd']",
-    ).send_keys(password)
-
-    # Click to login...the element is an input without name ...
-    # ...and an alt tag defined on config.yaml:
-    driver.find_element(
-        "xpath",
-        "//input[@alt='" + bnt_aceptar + "']",
-    ).click()
-
-    return True
-
-
 def navigate_to_data(website_uid, driver):
     """
 
@@ -304,11 +269,127 @@ def _save_records(website_uid, records):
             writer.writerow(row)
 
 
-def _accounts_scraper(website_uid):
-    # Get the url of the website (parameter)
-    host = config()["websites"][website_uid]["url"]
+def _accounts_scraper(driver, website_uid):
+    base_url = config()["websites"][website_uid]["url"]
 
-    logging.info("Beginning scraper for %s", host)
+    # Navigate to data
+    navigate_to_data(website_uid, driver)
+
+    # Navigate to data part 2
+    navigate_to_data2(website_uid, driver)
+
+    # Navigate to data part 3
+    navigate_to_data3(website_uid, driver)
+
+    logging.info("Finding number of pages...")
+    pages = _count_pages(website_uid, driver)
+    total_pages = int(pages[1].text)
+    print("Total pages: ", total_pages)
+
+    # Get the pagination...
+    base_config = config()["websites"][website_uid]["labels"]
+    pagination01 = base_config["page01"]["url_pagination01"]
+    pagination02 = base_config["page01"]["url_pagination02"]
+
+    records = []
+    cuentas = []
+    lista_cuentas = []
+
+    # Recorriendo las páginas
+    # for i in range(1, total_pages + 1):
+    for i in range(1, 2):
+        logger.info("Start fetching records at page #%s", i)
+        # Count the rows...
+        class_table = base_config["page05"]["class_table"]
+        class_td = base_config["page05"]["class_td"]
+
+        all_rows = driver.find_elements(
+            "xpath",
+            "//table[@class='"
+            + class_table
+            + "']/tbody/tr/td/table/tbody/"
+            + "tr[not(@valign)]/td[contains(@class, '"
+            + class_td
+            + "')]",
+        )
+
+        total_fields = int(len(all_rows))
+        total_rows = int(total_fields / 5)
+
+        for j in range(0, total_fields, 5):
+            record = _fetch_record(all_rows, j)
+
+            if record:
+                # logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
+                records.append(record)
+                cuentas.append(record["cuenta"])
+                # print("     ", record["cuenta"])
+                lista_cuentas.append(record["cuenta"])
+        print("Total rows: ", total_rows)
+        print("")
+
+        pagination = base_url + pagination01
+        pagination += str(i - 1) + pagination02 + str(i)
+
+        # Get the next page
+        if i != total_pages + 1:
+            driver.get(pagination)
+
+    # Save account's list (without details)
+    _save_records(website_uid, records)
+
+    # Get details
+    detalle_cuentas = _get_accounts_details(website_uid, driver, lista_cuentas)
+
+    # Save details to file
+    _save_cuentas_details(website_uid, detalle_cuentas)
+
+    driver.close()
+
+
+def _get_accounts_details(website_uid, driver, lista_cuentas):
+    detalle_cuentas = []
+    i = 0
+
+    for account in lista_cuentas:
+        i += 1
+
+        print(f"Registro {account}, #{i} de {len(lista_cuentas)}")
+
+        # Search an specific account:
+        base_url = config()["websites"][website_uid]["url"]
+        url_detail = config()["websites"][website_uid]["url_detail"]
+
+        driver.get(base_url + url_detail + account)
+
+        # driver.find_element("name", "id_login").send_keys(account)
+
+        # navigate_to_data3(website_uid, driver)
+
+        detalle_cuenta = _get_record_details(driver, account)
+
+        detalle_cuentas.append(detalle_cuenta)
+
+        # base_url = config()["websites"][website_uid]["url"]
+        # url_consulta = config()["websites"][website_uid]["url_consulta"]
+
+        # driver.get(base_url + url_consulta)
+
+    return detalle_cuentas
+
+
+def setup_driver():
+    """
+    Setup the webdriver for the indicated site (website_uid)
+
+    Parameters:
+    - website_uid (str): A unique identifier for a website
+    - driver (webdriver object): The Selenium WebDriver object in use.
+
+    Returns:
+    - driver
+    """
+    logging.info("Setting up driver")
 
     # Testing with older version of Chrome
     # Check if the current version of chromedriver exists
@@ -350,120 +431,71 @@ def _accounts_scraper(website_uid):
         ),
     )
 
-    # Get the site (driver)
-    driver.get(host)
+    return driver
 
-    # Try login
-    login = get_access(website_uid, driver)
-    if not login:
-        logger.warning("Error on login", exc_info=False)
-    else:
-        logger.info("Successful login!!")
-    print("")
 
-    # Navigate to data
-    navigate_to_data(website_uid, driver)
+def browse_site(driver, website_uid):
+    # Get the url of the website
+    base_url = config()["websites"][website_uid]["url"]
 
-    # Navigate to data part 2
-    navigate_to_data2(website_uid, driver)
+    logging.info("Browse the site %s", website_uid)
 
-    # Navigate to data part 3
-    navigate_to_data3(website_uid, driver)
+    # Browse the site
+    driver.get(base_url)
 
-    logging.info("Finding number of pages...")
-    pages = _count_pages(website_uid, driver)
-    total_pages = int(pages[1].text)
-    print("Total pages: ", total_pages)
 
-    # Get the pagination...
-    base_config = config()["websites"][website_uid]["labels"]
-    pagination01 = base_config["page01"]["url_pagination01"]
-    pagination02 = base_config["page01"]["url_pagination02"]
+def fill_login_screen(driver, website_uid):
+    # Get the credential data
+    base_config = config()["websites"][website_uid]
 
-    records = []
-    cuentas = []
-    lista_cuentas = []
+    user = base_config["user"]
+    password = base_config["password"]
+    titulo_sistema = base_config["title"]
 
-    # Recorriendo las páginas
-    for i in range(1, total_pages + 1):
-        # for i in range(1, 2):
-        logger.info("Start fetching records at page #%s", i)
-        # time.sleep(1)
-        # Count the rows...
-        class_table = base_config["page05"]["class_table"]
-        class_td = base_config["page05"]["class_td"]
-        all_rows = driver.find_elements(
+    bnt_aceptar = base_config["labels"]["page01"]["bnt_aceptar"]
+
+    try:
+        user_field = driver.find_element(
             "xpath",
-            "//table[@class='"
-            + class_table
-            + "']/tbody/tr/td/table/tbody/"
-            + "tr[not(@valign)]/td[contains(@class, '"
-            + class_td
-            + "')]",
+            "//input[@name='usuario']",
         )
 
-        total_fields = int(len(all_rows))
-        total_rows = int(total_fields / 5)
+        pwd_field = driver.find_element(
+            "xpath",
+            "//input[@name='pwd']",
+        )
 
-        for j in range(0, total_fields, 5):
-            record = _fetch_record(all_rows, j)
+        aceptar_button = driver.find_element(
+            "xpath",
+            "//input[@alt='" + bnt_aceptar + "']",
+        )
 
-            if record:
-                # logger.info('Record #{} fetched!!'.format(int(j / 5 + 1)))
-                records.append(record)
-                cuentas.append(record["cuenta"])
-                # print("     ", record["cuenta"])
-                lista_cuentas.append(record["cuenta"])
-        print("Total rows: ", total_rows)
-        print("")
+        # Set user and pwd
+        user_field.send_keys(user)
+        pwd_field.send_keys(password)
 
-        pagination = host + pagination01 + str(i - 1) + pagination02 + str(i)
+        # Click to login...the element is an input without name ...
+        # ...and an alt tag defined on config.yaml:
+        aceptar_button.click()
 
-        # Get the next page
-        if i != total_pages + 1:
-            driver.get(pagination)
+        titulo = driver.find_element(
+            "xpath",
+            "/html/body/table[1]/tbody/tr[3]/td",
+        )
 
-    # Save account's list (without details)
-    _save_records(website_uid, records)
+        return titulo.text == titulo_sistema
 
-    # Get details
-    detalle_cuentas = _get_accounts_details(website_uid, driver, lista_cuentas)
-
-    # Save details to file
-    _save_cuentas_details(website_uid, detalle_cuentas)
-
-    driver.close()
+    except NoSuchElementException:
+        return False
 
 
-def _get_accounts_details(website_uid, driver, lista_cuentas):
-    detalle_cuentas = []
-    i = 0
-
-    for account in lista_cuentas:
-        i += 1
-
-        print(f"Registro {account}, #{i} de {len(lista_cuentas)}")
-
-        # Search an specific account:
-        host = config()["websites"][website_uid]["url"]
-        url_detail = config()["websites"][website_uid]["url_detail"]
-
-        driver.get(host + url_detail + account)
-
-        # driver.find_element("name", "id_login").send_keys(account)
-
-        # navigate_to_data3(website_uid, driver)
-
-        detalle_cuenta = _get_record_details(driver, account)
-
-        detalle_cuentas.append(detalle_cuenta)
-
-        # host = config()["websites"][website_uid]["url"]
-        # url_consulta = config()["websites"][website_uid]["url_consulta"]
-
-        # driver.get(host + url_consulta)
-
-    return detalle_cuentas
+def check_login(driver, website_uid):
+    # Try login
+    if fill_login_screen(driver, website_uid):
+        logger.info("Successful login!!")
+    else:
+        logger.warning("Error on login", exc_info=False)
+    print("")
 
 
 if __name__ == "__main__":
@@ -471,6 +503,7 @@ if __name__ == "__main__":
 
     # Build the list of choices
     websites_choices = list(config()["websites"].keys())
+
     parser.add_argument(
         "website",
         help="Argument: The website that you want to scrape",
@@ -481,4 +514,11 @@ if __name__ == "__main__":
     # Parser the arguments
     args = parser.parse_args()
 
-    _accounts_scraper(args.website)
+    # Setup driver
+    gdriver = setup_driver()
+
+    browse_site(gdriver, args.website)
+
+    check_login(gdriver, args.website)
+
+    _accounts_scraper(gdriver, args.website)

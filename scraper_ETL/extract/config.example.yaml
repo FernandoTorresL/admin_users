@@ -1,6 +1,9 @@
 websites:
   admin_users:
     url: http://ip:port/GateAdministrator/
+    title: Title
+    url_consulta: url1
+    url_detail: url2
     user: user
     password: pwd
     labels:
